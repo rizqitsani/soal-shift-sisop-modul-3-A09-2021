@@ -97,9 +97,18 @@ void listFilesRecursively(char *basePath)
 
             listFilesRecursively(path);
         }
+        if (++n > 2)
+            break;
     }
-
     closedir(dir);
+    if (n <= 2)
+    {
+        printf("Yah, gagal disimpan :(\n");
+    }
+    else
+    {
+        printf("Direktori sukses disimpan!\n");
+    }
 }
 
 //fungsi main
@@ -144,14 +153,9 @@ int main(int argc, char *argv[])
             //open direktori sesuai argument kedua
             listFilesRecursively(argv[2]);
             struct stat s;
-            int err = stat(argv[2], &s);
-            if (err == -1)
+            if (stat(argv[2], &s))
             {
                 printf("Yah, gagal disimpan :(\n");
-            }
-            else
-            {
-                printf("Direktori sukses disimpan!\n");
             }
         }
     }
