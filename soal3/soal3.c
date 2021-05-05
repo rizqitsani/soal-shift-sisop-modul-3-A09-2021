@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <unistd.h>
 
 //fungsi buat cek eksis file
 int cfileexists(const char *filename)
@@ -20,6 +21,7 @@ int cfileexists(const char *filename)
 //fungsi move
 void *move(void *filename)
 {
+    char cwd[PATH_MAX];
     char dirname[200], hidden[100], hiddenname[100], file[100], existsfile[100];
     int i;
     strcpy(existsfile, filename);
@@ -57,13 +59,18 @@ void *move(void *filename)
         mkdir(dirname, 0755);
 
     //dapet nama file
-    char *nama = strrchr(filename, '/');
-    char namafile[200] = "/home/daffainfo/modul3/";
-    strcat(namafile, dirname);
-    strcat(namafile, nama);
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
+        char *nama = strrchr(filename, '/');
+        char namafile[200];
+        strcpy(namafile, cwd);
+        strcat(namafile, "/");
+        strcat(namafile, dirname);
+        strcat(namafile, nama);
 
-    //move file pake rename
-    rename(filename, namafile);
+        //move file pake rename
+        rename(filename, namafile);
+    }
 }
 
 //rekursif list
@@ -97,23 +104,17 @@ void listFilesRecursively(char *basePath)
 
             listFilesRecursively(path);
         }
-        if (++n > 2)
-            break;
+        ++n;
+        printf("%d\n", n);
     }
+
     closedir(dir);
-    if (n <= 2)
-    {
-        printf("Yah, gagal disimpan :(\n");
-    }
-    else
-    {
-        printf("Direktori sukses disimpan!\n");
-    }
 }
 
 //fungsi main
 int main(int argc, char *argv[])
 {
+    char cwd[PATH_MAX];
     //Ketika ada argument -f
     if (strcmp(argv[1], "-f") == 0)
     {
@@ -143,8 +144,11 @@ int main(int argc, char *argv[])
         //ketika ada *
         if (strcmp(argv[1], "*") == 0)
         {
-            //membuka working directory sendiri
-            listFilesRecursively("/home/daffainfo/modul3");
+            if (getcwd(cwd, sizeof(cwd)) != NULL)
+            {
+                //membuka working directory sendiri
+                listFilesRecursively(cwd);
+            }
         }
 
         //ketika ada argument -d
@@ -153,9 +157,14 @@ int main(int argc, char *argv[])
             //open direktori sesuai argument kedua
             listFilesRecursively(argv[2]);
             struct stat s;
-            if (stat(argv[2], &s))
+            int err = stat(argv[2], &s);
+            if (err == -1)
             {
                 printf("Yah, gagal disimpan :(\n");
+            }
+            else
+            {
+                printf("Direktori sukses disimpan!\n");
             }
         }
     }
