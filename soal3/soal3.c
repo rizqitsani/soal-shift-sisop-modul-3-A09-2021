@@ -104,10 +104,16 @@ void listFilesRecursively(char *basePath)
 
             listFilesRecursively(path);
         }
-        ++n;
-        printf("%d\n", n);
     }
 
+    if (dir == NULL)
+    {
+        printf("Yah, gagal disimpan :(\n");
+    }
+    else
+    {
+        printf("Direktori sukses disimpan!\r");
+    }
     closedir(dir);
 }
 
