@@ -13,7 +13,9 @@ typedef struct arg {
   int rowIndex;
 } arg_t;
 
+int (*sharedValue)[KOLOM];
 int resultMatrix[BARIS][KOLOM];
+int inputMatrix[4][6];
 
 int getDesiredValue(int value, int limit) {
   int result = 1, multiplier;
@@ -32,46 +34,30 @@ int getDesiredValue(int value, int limit) {
 }
 
 void *threadFunction(void* argument) {
-  arg_t *args = argument;
-  if (args->value == 0 || args->limit == 0) {
-    resultMatrix[args->rowIndex][args->colIndex] = 0;
-  } else {
-    resultMatrix[args->rowIndex][args->colIndex] = getDesiredValue(args->value, args->limit);
+  for(int i = 0; i < BARIS; i++) {
+    for(int j = 0; j < KOLOM; j++) {
+      if (sharedValue[i][j] == 0 || inputMatrix[i][j] == 0) {
+        resultMatrix[i][j] = 0;
+      } else {
+        resultMatrix[i][j] = getDesiredValue(sharedValue[i][j], inputMatrix[i][j]);
+      }
+    }
   }
 }
 
 int main() {
   key_t key = 7890;
 
-  int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
-  int *sharedValue = shmat(shmid, NULL, 0);
-  
-  pthread_t tid[BARIS * KOLOM];
-  int receivedMatrix[BARIS][KOLOM];
-  int threadIndex;
+  int shmid = shmget(key, sizeof(int[BARIS][KOLOM]), IPC_CREAT | 0666);
+  sharedValue = shmat(shmid, NULL, 0);
+
+  pthread_t tid;
   arg_t args;
 
-  int inputMatrix[4][6]={
-    {1, 2, 2, 4, 1, 3},
-    {2, 1, 3, 3, 1, 0},
-    {1, 2, 4, 4, 2, 1},
-    {1, 3, 1, 1, 2, 2},
-  };
-
+  printf("Input kedua:\n");
   for(int i = 0; i < BARIS; i++) {
     for(int j = 0; j < KOLOM; j++) {
-      printf("Terima: %d \n", *sharedValue);
-      receivedMatrix[i][j] = *sharedValue;
-
-      args.value = receivedMatrix[i][j];
-      args.limit = inputMatrix[i][j];
-      args.colIndex = j;
-      args.rowIndex = i;
-
-      pthread_create(&tid[threadIndex], NULL, &threadFunction, (void*) &args);
-
-      threadIndex++;
-      sleep(3);
+      scanf("%d", &inputMatrix[i][j]);
     }
   }
 
@@ -79,11 +65,15 @@ int main() {
 
   for (int i = 0; i < BARIS; i++) {
     for (int j = 0; j < KOLOM; j++) {
-      printf("%d\t", receivedMatrix[i][j]);
+      printf("%d\t", sharedValue[i][j]);
     }
 
     printf("\n");
   }
+
+  pthread_create(&tid, NULL, &threadFunction, NULL);
+
+  pthread_join(tid, NULL);
 
   printf("\nMatriks yang dihasilkan: \n");
 
@@ -93,10 +83,6 @@ int main() {
     }
 
     printf("\n");
-  }
-
-  for (int i = 0; i < threadIndex; i++) {
-    pthread_join(tid[i], NULL);
   }
 
   shmdt(sharedValue);

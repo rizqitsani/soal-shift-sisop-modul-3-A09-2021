@@ -10,24 +10,30 @@
 int main()
 {
   key_t key = 7890;
-  int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
-  int *sharedValue = shmat(shmid, NULL, 0);
+  int (*sharedValue)[KOLOM_KANAN];
+  int shmid = shmget(key, sizeof(int[BARIS_KIRI][KOLOM_KANAN]), IPC_CREAT | 0666);
+  sharedValue = shmat(shmid, NULL, 0);
 
   int result[BARIS_KIRI][KOLOM_KANAN];
+  int first[BARIS_KIRI][KOLOM_KIRI];
+  int second[BARIS_KANAN][KOLOM_KANAN];
 
   int sum = 0;
-  int first[BARIS_KIRI][KOLOM_KIRI] = {
-    {2, 3, 1},
-    {1, 2, 3},
-    {1, 3, 3},
-    {2, 1, 2}
-  };
 
-  int second[BARIS_KANAN][KOLOM_KANAN] = {
-    {1, 2, 5, 4, 1, 1},
-    {1, 5, 1, 3, 2, 2},
-    {1, 4, 3, 3, 2, 4}
-  };
+  printf("Input pertama:\n");
+  for(int i = 0; i < BARIS_KIRI; i++) {
+    for(int j =0; j < KOLOM_KIRI; j++) {
+      scanf("%d", &first[i][j]);
+    }
+  }
+
+  printf("Input kedua:\n");
+  for(int i = 0; i < BARIS_KANAN; i++) {
+    for(int j = 0; j < KOLOM_KANAN; j++) {
+      scanf("%d", &second[i][j]);
+    }
+  }
+  printf("\n");
 
   for (int i = 0; i < BARIS_KIRI; i++) {
     for (int j = 0; j < KOLOM_KANAN; j++) {
@@ -35,6 +41,7 @@ int main()
         sum += first[i][k] * second[k][j];
       }
 
+      sharedValue[i][j] = sum;
       result[i][j] = sum;
       sum = 0;
     }
@@ -43,20 +50,14 @@ int main()
   printf("Hasil Matriks:\n");
   for (int i = 0; i < BARIS_KIRI; i++) {
     for (int j = 0; j < KOLOM_KANAN; j++) {
-      printf("%d\t", result[i][j]);
+      sharedValue[i][j] = result[i][j];
+      printf("%d\t", sharedValue[i][j]);
     }
 
     printf("\n");
   }
 
-  for (int i = 0; i < BARIS_KIRI; i++) {
-    for (int j = 0; j < KOLOM_KANAN; j++) {
-      *sharedValue = result[i][j];
-      sleep(3);
-      printf("Kirim: %d \n", *sharedValue);
-    }
-  }
-
+  sleep(10);
   shmdt(sharedValue);
   shmctl(shmid, IPC_RMID, NULL);
 
