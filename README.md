@@ -213,3 +213,9 @@ int main(int argc, char *argv[])
 - Kadang-kadang terkena error segmentation fault
 
 ## Screenshoot
+`mkdir testcase && cd testcase && touch root.JPG && touch root.jpg && touch .root && mkdir child && cd child && touch child.tar.gz && cd` Saya membuat testcase dengan command seperti ini yaitu membuat folder dan didalamnya terdapat file" dengan extensi yang berbeda-beda
+![https://i.ibb.co/Jr3gP4C/Screenshot-from-2021-05-11-15-09-20.png](https://i.ibb.co/Jr3gP4C/Screenshot-from-2021-05-11-15-09-20.png)
+Mencoba argument `-f` Untuk memindahkan dan kategori file ke tempat soal3 berada dan print berhasil atau gagal
+
+![https://i.ibb.co/9gP0T8X/Screenshot-from-2021-05-11-15-14-13.png](https://i.ibb.co/9gP0T8X/Screenshot-from-2021-05-11-15-14-13.png)
+Kemudian untuk argument `-d` Untuk memindahkan folder dan kategorikan file yang ada di tujuan ke tempat soal3 berada
