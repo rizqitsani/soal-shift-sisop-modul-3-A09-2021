@@ -35,42 +35,181 @@ c. Karena takut lag dalam pengerjaannya membantu Loba, Crypto juga membuat progr
 
 3. Seorang mahasiswa bernama Alex sedang mengalami masa gabut. Di saat masa gabutnya, ia memikirkan untuk merapikan sejumlah file yang ada di laptopnya. Karena jumlah filenya terlalu banyak, Alex meminta saran ke Ayub. Ayub menyarankan untuk membuat sebuah program C agar file-file dapat dikategorikan. Program ini akan memindahkan file sesuai ekstensinya ke dalam folder sesuai ekstensinya yang folder hasilnya terdapat di working directory ketika program kategori tersebut dijalankan.
 
-Contoh apabila program dijalankan:
+Terdapat fungsi bernama `cfileexists` yang berfungsi untuk mengecek file tersebut ada atau tidak
 ```
-# Program soal3 terletak di /home/izone/soal3
-$ ./soal3 -f path/to/file1.jpg path/to/file2.c path/to/file3.zip
-#Hasilnya adalah sebagai berikut
-/home/izone
-|-jpg
-    |--file1.jpg
-|-c
-    |--file2.c
-|-zip
-    |--file3.zip
+int cfileexists(const char *filename)
+{
+    struct stat buffer;
+    int exist = stat(filename, &buffer);
+    if (exist == 0)
+        return 1;
+    else // -1
+        return 0;
+}
 ```
-a. Program menerima opsi `-f` seperti contoh di atas, jadi pengguna bisa menambahkan argumen file yang bisa dikategorikan sebanyak yang diinginkan oleh pengguna. 
-Output yang dikeluarkan adalah seperti ini :
+Kemudian terdapat fungsi `*move` yaitu adalah fungsi utama dari program ini
 ```
-File 1 : Berhasil Dikategorikan (jika berhasil)
-File 2 : Sad, gagal :( (jika gagal)
-File 3 : Berhasil Dikategorikan
+void *move(void *filename)
 ```
-b. Program juga dapat menerima opsi `-d` untuk melakukan pengkategorian pada suatu directory. Namun pada opsi -d ini, user hanya bisa memasukkan input 1 directory saja, tidak seperti file yang bebas menginput file sebanyak mungkin. Contohnya adalah seperti ini:
+Fungsinya yang pertama ialah untuk mengkategorikan file sesuai extensinya, jika tidak terdapat ekstensi maka akan masuk folder "Unknown" dan juga bila file tersebut adalah hidden file maka masuk kedalam folder bernama "Hidden".
 ```
-$ ./soal3 -d /path/to/directory/
-```
-Perintah di atas akan mengkategorikan file di /path/to/directory, lalu hasilnya akan disimpan di working directory dimana program C tersebut berjalan (hasil kategori filenya bukan di /path/to/directory).
-Output yang dikeluarkan adalah seperti ini :
-```
-Jika berhasil, print “Direktori sukses disimpan!”
-Jika gagal, print “Yah, gagal disimpan :(“
-```
-c. Selain menerima opsi-opsi di atas, program ini menerima opsi `*`, contohnya ada di bawah ini:
-```
-$ ./soal3 \*
-```
-Opsi ini akan mengkategorikan seluruh file yang ada di working directory ketika menjalankan program C tersebut.
+    char cwd[PATH_MAX];
+    char dirname[200], hidden[100], hiddenname[100], file[100], existsfile[100];
+    int i;
+    strcpy(existsfile, filename);
+    strcpy(hiddenname, filename);
+    char *namaa = strrchr(hiddenname, '/');
+    strcpy(hidden, namaa);
 
-d. Semua file harus berada di dalam folder, jika terdapat file yang tidak memiliki ekstensi, file disimpan dalam folder “Unknown”. Jika file hidden, masuk folder “Hidden”.
+    //Untuk file yang hidden, awalan .
+    if (hidden[1] == '.')
+    {
+        strcpy(dirname, "Hidden");
+    }
+    //File biasa
+    else if (strstr(filename, ".") != NULL)
+    {
+        strcpy(file, filename);
+        strtok(file, ".");
+        char *token = strtok(NULL, "");
+        //nggak case sensitive
+        for (i = 0; token[i]; i++)
+        {
+            token[i] = tolower(token[i]);
+        }
+        strcpy(dirname, token);
+    }
+    //file gaada extensi
+    else
+    {
+        strcpy(dirname, "Unknown");
+    }
+    
+    int exist = cfileexists(existsfile);
+    if (exist)
+        mkdir(dirname, 0755);
+```
+Ini adalah salah satu fungsinya yaitu mengkategorikan file, yang pertama mengambil character pertama yaitu `.` maka akan membuat folder Hidden, kemudian mengambil extensinya dan membuat folder sesuai nama extensi, namun terdapat aturan jika nama extensi tidak case sensitive sehingga memakai fungsi `tolower` untuk membuat capital menjadi huruf kecil, dan kemudian jika tidak extensi maka akan membuat folder "Unknown"
+```
+if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
+        char *nama = strrchr(filename, '/');
+        char namafile[200];
+        strcpy(namafile, cwd);
+        strcat(namafile, "/");
+        strcat(namafile, dirname);
+        strcat(namafile, nama);
 
-e. Setiap 1 file yang dikategorikan dioperasikan oleh 1 thread agar bisa berjalan secara paralel sehingga proses kategori bisa berjalan lebih cepat.
+        //move file pake rename
+        rename(filename, namafile);
+    }
+```
+Kemudian dibagian ini terdapat fungsi untuk mengambil nama file saja menggunakan fungsi `strrchr` dan memindahkan file yang dituju menggunakan fungsi c yaitu `rename()`
+
+```
+void listFilesRecursively(char *basePath)
+{
+    char path[1000];
+    struct dirent *dp;
+    struct stat buffer;
+    DIR *dir = opendir(basePath);
+    int n = 0;
+
+    if (!dir)
+        return;
+
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        {
+            // Construct new path from our base path
+            strcpy(path, basePath);
+            strcat(path, "/");
+            strcat(path, dp->d_name);
+
+            if (stat(path, &buffer) == 0 && S_ISREG(buffer.st_mode))
+            {
+                //membuat thread untuk cek move
+                pthread_t thread;
+                int err = pthread_create(&thread, NULL, move, (void *)path);
+                pthread_join(thread, NULL);
+            }
+
+            listFilesRecursively(path);
+        }
+    }
+    closedir(dir);
+}
+```
+Terdapat juga fungsi untuk melist file secara rekursif dikarenakan untuk soal nomer 2 point b dan c diharuskan untuk melist file secara rekursif. Kemudian setelah dilist, dibuat juga thread dan fungsi `*move` tadi sebagai argument dan setelah dibuat thread dilanjutkan menggunakan `pthread_join`
+```
+int main(int argc, char *argv[])
+{
+    char cwd[PATH_MAX];
+    //Ketika ada argument -f
+    if (strcmp(argv[1], "-f") == 0)
+    {
+        pthread_t thread;
+        int i, j;
+        //buat thread dan print msg
+        for (i = 2; i < argc; i++)
+        {
+            char printmsg[1000];
+            int exist = cfileexists(argv[i]);
+            if (exist)
+            {
+                sprintf(printmsg, "File %d : Berhasil Dikategorikan", i - 1);
+            }
+            else
+            {
+                sprintf(printmsg, "File %d : Sad, gagal :(", i - 1);
+            }
+            printf("%s\n", printmsg);
+            int err = pthread_create(&thread, NULL, move, (void *)argv[i]);
+        }
+        //join semua thread
+        for (j = 0; j < argc; i++) {
+            pthread_join(thread, NULL);
+        }
+        // pthread_join(thread, NULL);
+    }
+    else
+    {
+        //ketika ada *
+        if (strcmp(argv[1], "*") == 0)
+        {
+            if (getcwd(cwd, sizeof(cwd)) != NULL)
+            {
+                //membuka working directory sendiri
+                listFilesRecursively(cwd);
+            }
+        }
+
+        //ketika ada argument -d
+        else if (strcmp(argv[1], "-d") == 0)
+        {
+            //open direktori sesuai argument kedua
+            listFilesRecursively(argv[2]);
+            struct stat buffer;
+            int err = stat(argv[2], &buffer);
+            if (err == -1)
+            {
+                printf("Yah, gagal disimpan :(\n");
+            }
+            else
+            {
+                printf("Direktori sukses disimpan!\n");
+            }
+        }
+    }
+}
+```
+- Kemudian di fungsi `main` yang didalamnya untuk mengecek argument-argument seperti `-f` kemudian dibuat fungsi untuk memindahkan file tujuan ke working directory. didalamnya terdapat create thread menggunkanan `pthread_create` dan terdapat print berhasil atau gagal dan juga setelah dibuat create dan membuat `pthread_join`
+- Kemudian terdapat juga untuk mengecek `*` yaitu untuk mengkategorikan semua file sesuai file soal3 ini berasal, disini menggunakan `getcwd` untuk mengetahui lokasi file dan menggunakan fungsi yang sudah dibuat diatas yaitu `listFilesRecursively` untuk melist file secara rekursif
+- Dan yang terakhir untuk cek argument `-d` yaitu untuk mengkategorikan semua file tergantung dari folder tujuan, disini kurang lebih sama seperti mengecek * namun di argument untuk fungsi `listFilesRecursively` menggunakan `argv[2]` untuk mengambil balue argument ke dua dan juga terdapat print output disini
+
+## Kendala yang dialami
+- Masih kurang terbiasa dengan konsep process dan thread
+- Kadang-kadang terkena error segmentation fault
+
+## Screenshoot
