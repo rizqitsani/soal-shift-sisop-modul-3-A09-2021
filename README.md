@@ -214,8 +214,15 @@ int main(int argc, char *argv[])
 
 ## Screenshoot
 `mkdir testcase && cd testcase && touch root.JPG && touch root.jpg && touch .root && mkdir child && cd child && touch child.tar.gz && cd` Saya membuat testcase dengan command seperti ini yaitu membuat folder dan didalamnya terdapat file" dengan extensi yang berbeda-beda
-![https://i.ibb.co/Jr3gP4C/Screenshot-from-2021-05-11-15-09-20.png](https://i.ibb.co/Jr3gP4C/Screenshot-from-2021-05-11-15-09-20.png)
+![https://i.ibb.co/FVv6MLj/Screenshot-from-2021-05-11-15-18-40.png](https://i.ibb.co/FVv6MLj/Screenshot-from-2021-05-11-15-18-40.png)
 Mencoba argument `-f` Untuk memindahkan dan kategori file ke tempat soal3 berada dan print berhasil atau gagal
 
-![https://i.ibb.co/9gP0T8X/Screenshot-from-2021-05-11-15-14-13.png](https://i.ibb.co/9gP0T8X/Screenshot-from-2021-05-11-15-14-13.png)
+![https://i.ibb.co/tm1YYLT/Screenshot-from-2021-05-11-16-25-30.png](https://i.ibb.co/tm1YYLT/Screenshot-from-2021-05-11-16-25-30.png)
 Kemudian untuk argument `-d` Untuk memindahkan folder dan kategorikan file yang ada di tujuan ke tempat soal3 berada
+
+![https://i.ibb.co/SQqCc2w/Screenshot-from-2021-05-11-16-28-21.png](https://i.ibb.co/SQqCc2w/Screenshot-from-2021-05-11-16-28-21.png)
+Kemudian untuk argument `*` Untuk mengkategorikan folder sesuai dengan working directory di tempat soal3 berada
+Dan kemudian screenshoot untuk tiap testcase seperti case sensitive atau terdapat extensi yang bertumpuk seperti screenshootnya
+![https://i.ibb.co/4sRr5mZ/Screenshot-from-2021-05-11-16-28-24.png](https://i.ibb.co/4sRr5mZ/Screenshot-from-2021-05-11-16-28-24.png)
+![https://i.ibb.co/LvwHT48/Screenshot-from-2021-05-11-16-36-39.png](https://i.ibb.co/LvwHT48/Screenshot-from-2021-05-11-16-36-39.png)
+![https://i.ibb.co/nL1QfH5/Screenshot-from-2021-05-11-16-36-43.png](https://i.ibb.co/nL1QfH5/Screenshot-from-2021-05-11-16-36-43.png)
