@@ -1,5 +1,286 @@
 # Soal Shift Modul 3
 
+## Daftar Isi
+* [Daftar Isi](#daftar-isi)
+* [Nomor 1](#nomor-1)
+* [Nomor 2](#nomor-2)
+* [Nomor 3](#nomor-3)
+
+## Nomor 2
+
+[Daftar Isi](#daftar-isi)
+
+### **Soal 2A**
+
+Source Code : [Click here!](https://github.com/rizqitsani/soal-shift-sisop-modul-3-A09-2021/blob/main/soal2/soal2a.c)
+
+Membuat program perkalian dua matriks dengan ukuran 4x3 dan 3x6. Setelah itu menampilkan hasilnya.
+
+Pertama digunakan beberapa konstan untuk membantu proses pengerjaan
+
+```c
+#define BARIS_KIRI 4
+#define KOLOM_KIRI 3
+#define BARIS_KANAN 3
+#define KOLOM_KANAN 6
+```
+
+Karena hasil perkalian akan digunakan pada soal 2b, digunakan shared memory dengan value yang dibagikan diberi nama `sharedValue` yang berisi matriks hasil perkalian
+
+```c
+key_t key = 7890;
+int (*sharedValue)[KOLOM_KANAN];
+int shmid = shmget(key, sizeof(int[BARIS_KIRI][KOLOM_KANAN]), IPC_CREAT | 0666);
+sharedValue = shmat(shmid, NULL, 0);
+```
+
+Pertama, pengguna diminta untuk memasukkan matriksnya
+
+```c
+printf("Input pertama:\n");
+for(int i = 0; i < BARIS_KIRI; i++) {
+    for(int j =0; j < KOLOM_KIRI; j++) {
+        scanf("%d", &first[i][j]);
+    }
+}
+
+printf("Input kedua:\n");
+for(int i = 0; i < BARIS_KANAN; i++) {
+    for(int j = 0; j < KOLOM_KANAN; j++) {
+        scanf("%d", &second[i][j]);
+    }
+}
+printf("\n");
+```
+
+Setelah itu dilakukan proses perkalian
+
+```c
+for (int i = 0; i < BARIS_KIRI; i++) {
+  for (int j = 0; j < KOLOM_KANAN; j++) {
+    for (int k = 0; k < KOLOM_KIRI; k++) {
+      sum += first[i][k] * second[k][j];
+    }
+
+    sharedValue[i][j] = sum;
+    result[i][j] = sum;
+    sum = 0;
+  }
+}
+```
+
+Lalu, matriks hasil perkalian akan ditampilkan sekaligus disimpan kedalam `sharedValue`
+
+```c
+printf("Hasil Matriks:\n");
+for (int i = 0; i < BARIS_KIRI; i++) {
+  for (int j = 0; j < KOLOM_KANAN; j++) {
+    sharedValue[i][j] = result[i][j];
+    printf("%d\t", sharedValue[i][j]);
+  }
+
+  printf("\n");
+}
+```
+
+### **Soal 2B**
+
+Source Code : [Click here!](https://github.com/rizqitsani/soal-shift-sisop-modul-3-A09-2021/blob/main/soal2/soal2b.c)
+
+Melakukan operasi unik yang telah ditentukan menggunakan matriks dari soal 2a dan matriks dari input pengguna
+
+Pertama digunakan beberapa konstan untuk membantu proses pengerjaan
+
+```c
+#define BARIS 4
+#define KOLOM 6
+```
+
+Dilakukan pengambilan nilai matriks yang dihasilkan dari soal 2a lalu disimpan kedalam variabel `sharedValue`
+
+```c
+key_t key = 7890;
+
+int shmid = shmget(key, sizeof(int[BARIS][KOLOM]), IPC_CREAT | 0666);
+sharedValue = shmat(shmid, NULL, 0);
+```
+
+Pertama, pengguna diminta memasukkan matriks baru baru matriks yang ditampung dalam `sharedValue` ditampilkan
+
+```c
+printf("Input kedua:\n");
+for(int i = 0; i < BARIS; i++) {
+  for(int j = 0; j < KOLOM; j++) {
+    scanf("%d", &inputMatrix[i][j]);
+  }
+}
+
+printf("Matriks yang diterima: \n");
+
+for (int i = 0; i < BARIS; i++) {
+  for (int j = 0; j < KOLOM; j++) {
+    printf("%d\t", sharedValue[i][j]);
+  }
+
+  printf("\n");
+}
+```
+
+Membuat thread yang akan menjalankan fungsi `threadFunction`
+
+```c
+pthread_create(&tid, NULL, &threadFunction, NULL);
+```
+
+Fungsi `threadFunction` ini akan menelusuri elemen pada kedua matriks sehingga dapat dimasukkan ke fungsi `getDesiredValue` untuk mendapat hasil operasinya
+
+```c
+void *threadFunction(void* argument) {
+  for(int i = 0; i < BARIS; i++) {
+    for(int j = 0; j < KOLOM; j++) {
+      if (sharedValue[i][j] == 0 || inputMatrix[i][j] == 0) {
+        resultMatrix[i][j] = 0;
+      } else {
+        resultMatrix[i][j] = getDesiredValue(sharedValue[i][j], inputMatrix[i][j]);
+      }
+    }
+  }
+}
+```
+
+Fungsi `getDesiredValue` berfungsi untuk melakukan operasi unik yang telah ditentukan
+
+```c
+int getDesiredValue(int value, int limit) {
+  int result = 1, multiplier;
+
+  if (limit >= value) {
+    multiplier = 2;
+  } else {
+    multiplier = value - limit + 1;
+  }
+
+  for (int i = multiplier; i <= value; i++) {
+    result *= i;
+  }
+
+  return result;
+}
+```
+
+Terakhir thread di-join dan matriks hasil operasi ditampilkan
+
+```c
+pthread_join(tid, NULL);
+
+printf("\nMatriks yang dihasilkan: \n");
+
+for (int i = 0; i < BARIS; i++) {
+  for (int j = 0; j < KOLOM; j++) {
+    printf("%d\t", resultMatrix[i][j]);
+  }
+
+  printf("\n");
+}
+```
+
+### **Soal 2C**
+
+Source Code : [Click here!](https://github.com/rizqitsani/soal-shift-sisop-modul-3-A09-2021/blob/main/soal2/soal2c.c)
+
+Membuat sebuah program untuk melihat 5 proses teratas yang memakan banyak resource
+
+Proses pengerjaan mirip seperti pada soal latihan menggunakan fork untuk membantu proses piping
+
+```c
+int main() {
+  pid_t child_id;
+  int status;
+
+  if (pipe(fd1) == -1) {
+    fprintf(stderr, "Pipe Failed");
+    return 1;
+  }
+
+  child_id = fork();
+  if (child_id < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (child_id == 0) {
+    close(fd1[0]);
+    dup2(fd1[1], STDOUT_FILENO);
+
+    execlp("ps", "ps", "aux", NULL);
+  }
+
+  if (pipe(fd2) == -1) {
+    fprintf(stderr, "Pipe Failed");
+    return 1;
+  }
+
+  child_id = fork();
+  if (child_id < 0)
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  if (child_id == 0) {
+    close(fd1[1]);
+    dup2(fd1[0], STDIN_FILENO);
+
+    close(fd2[0]);
+    dup2(fd2[1], STDOUT_FILENO);
+
+    execlp("sort", "sort", "-nrk", "3.3", NULL);
+  }
+
+  close(fd1[0]);
+  close(fd1[1]);
+
+  close(fd2[1]);
+  dup2(fd2[0], STDIN_FILENO);
+  close(fd2[0]);
+
+  execlp("head", "head", "-5", NULL);
+}
+```
+
+### **Kendala**
+
+- Belum mengetahui cara yang efektif agar program 2b dapat menunggu sampai program 2a selesai dijalankan
+- Belum terlalu paham dengan konsep piping sehingga sering terjadi error saat pengerjaan
+
+### **Screenshot**
+
+Testcase yang dijalankan pada soal 2A dan 2B:
+
+```
+2 3 1
+1 2 3
+1 3 3
+2 1 2
+1 2 5 4 1 1
+1 5 1 3 2 2
+1 4 3 3 2 4
+
+
+1 2 2 4 1 3
+2 1 3 3 1 0
+1 2 4 4 2 1
+1 3 1 1 2 2
+```
+
+Soal 2A dan 2B:
+
+![Soal 2A & 2B](https://i.ibb.co/84rdQnQ/Screenshot-from-2021-05-23-21-44-54.png "Soal 2A & 2B")
+
+Soal 2C:
+
+![Soal 2C](https://i.ibb.co/RyDHvSz/Screenshot-from-2021-05-23-21-46-23.png "Soal 2C")
+
+## Nomor 3
+
 1. Keverk adalah orang yang cukup ambisius dan terkenal di angkatannya. Sebelum dia menjadi ketua departemen di HMTC, dia pernah mengerjakan suatu proyek dimana keverk tersebut meminta untuk membuat server database buku. Proyek ini diminta agar dapat digunakan oleh pemilik aplikasi dan diharapkan bantuannya dari pengguna aplikasi ini. 
 
 Di dalam proyek itu, Keverk diminta: 
