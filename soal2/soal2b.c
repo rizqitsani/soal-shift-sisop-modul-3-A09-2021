@@ -6,13 +6,6 @@
 #define BARIS 4
 #define KOLOM 6
 
-typedef struct arg {
-  int value;
-  int limit;
-  int colIndex;
-  int rowIndex;
-} arg_t;
-
 int (*sharedValue)[KOLOM];
 int resultMatrix[BARIS][KOLOM];
 int inputMatrix[4][6];
@@ -52,7 +45,6 @@ int main() {
   sharedValue = shmat(shmid, NULL, 0);
 
   pthread_t tid;
-  arg_t args;
 
   printf("Input kedua:\n");
   for(int i = 0; i < BARIS; i++) {
